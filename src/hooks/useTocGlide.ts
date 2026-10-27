@@ -218,21 +218,42 @@ function createTocGlide(nav: HTMLElement, parts: TocGlideParts): TocGlideControl
     frame = requestAnimationFrame(tick);
   };
 
-  /** Brings the current row back into view, unless the reader has the pointer on the list. */
+  const directoryScroller = () => nav.closest<HTMLElement>('[data-toc-scroller]');
+
+  /**
+   * Brings the current row back into view, unless the reader has the pointer on the list.
+   * The target is clamped to the top: a smooth scroll to a negative offset is ignored, and the
+   * entries above the window would stay hidden until a reload.
+   */
   const follow = (instant: boolean) => {
-    const scroller = nav.closest<HTMLElement>('[data-toc-scroller]');
+    const scroller = directoryScroller();
     const visible = visibleRow();
     followedRow = visible;
     if (!scroller || !visible || scroller.scrollHeight <= scroller.clientHeight + 1) return;
     if (!instant && scroller.matches(':hover')) return;
     const view = scroller.clientHeight;
+    const bounds = scroller.getBoundingClientRect();
     const rect = visible.getBoundingClientRect();
-    const offset = rect.top + rect.height / 2 - scroller.getBoundingClientRect().top;
+    const offset = rect.top + rect.height / 2 - bounds.top;
     if (offset >= view * COMFORT_BAND[0] && offset <= view * COMFORT_BAND[1]) return;
+    const above = rect.bottom <= bounds.top + 1;
     scroller.scrollTo({
-      top: scroller.scrollTop + offset - view * FOLLOW_AT,
-      behavior: instant || !feel ? 'instant' : 'smooth',
+      top: Math.max(0, scroller.scrollTop + offset - view * FOLLOW_AT),
+      behavior: instant || !feel || above ? 'instant' : 'smooth',
     });
+  };
+
+  /** The reader left the article, so the directory shows its first entries again. */
+  const showDirectoryTop = () => {
+    const scroller = directoryScroller();
+    if (!scroller || scroller.scrollTop <= 0 || scroller.matches(':hover')) return;
+    scroller.scrollTo({ top: 0, behavior: 'instant' });
+  };
+
+  // A follow skipped while the pointer rested on the list still runs once the pointer leaves.
+  const onPointerLeave = () => {
+    if (row) follow(true);
+    else showDirectoryTop();
   };
 
   // Sections unfolding or folding move every row below them; keep the parts on their rows. Once a
@@ -257,6 +278,8 @@ function createTocGlide(nav: HTMLElement, parts: TocGlideParts): TocGlideControl
     else snap();
   };
   document.addEventListener('visibilitychange', onVisibility);
+  const scroller = directoryScroller();
+  scroller?.addEventListener('pointerleave', onPointerLeave);
 
   return {
     setProgress(progress) {
@@ -275,6 +298,7 @@ function createTocGlide(nav: HTMLElement, parts: TocGlideParts): TocGlideControl
         petal = null;
         for (const element of rows) element.removeAttribute('data-passed');
         passedRows.fill(false);
+        showDirectoryTop();
         return;
       }
       const onScreen = wash !== null;
@@ -295,6 +319,7 @@ function createTocGlide(nav: HTMLElement, parts: TocGlideParts): TocGlideControl
       observer.disconnect();
       unsubscribeMotion();
       document.removeEventListener('visibilitychange', onVisibility);
+      scroller?.removeEventListener('pointerleave', onPointerLeave);
     },
   };
 }

@@ -4,9 +4,20 @@
  * Persisted across navigations so the petals keep drifting instead of restarting;
  * only animates at the `lively` motion level while the cover is on screen.
  */
+interface Props {
+  /** svg/gif urls cycled per petal. Empty keeps the built-in petal sprites. */
+  sources?: readonly string[];
+}
+
+const { sources = [] } = Astro.props;
 ---
 
-<sakura-petals class="pointer-events-none absolute inset-0" aria-hidden="true" transition:persist="cover-petals">
+<sakura-petals
+  class="pointer-events-none absolute inset-0"
+  aria-hidden="true"
+  transition:persist="cover-petals"
+  data-sources={JSON.stringify(sources)}
+>
   <canvas class="block h-full w-full"></canvas>
 </sakura-petals>
 
@@ -15,6 +26,17 @@
   import { PetalField } from '@lib/sakura/petal-field';
 
   const FADE_MS = 900;
+
+  function readSources(raw: string | null): string[] {
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter((item): item is string => typeof item === 'string' && item.length > 0);
+    } catch {
+      return [];
+    }
+  }
 
   const whenIdle = (callback: () => void): (() => void) => {
     if (typeof window.requestIdleCallback === 'function') {
@@ -38,7 +60,7 @@
       if (!canvas) return;
       if (!this.field) {
         try {
-          this.field = new PetalField(canvas);
+          this.field = new PetalField(canvas, readSources(this.getAttribute('data-sources')));
         } catch {
           return;
         }

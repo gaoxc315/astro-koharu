@@ -1,3 +1,4 @@
+# test
 # yaml-language-server: $schema=https://json-schema.org/draft-07/schema
 # =============================================================================
 # Site Configuration
@@ -11,17 +12,17 @@
 # Site Basic Information
 # =============================================================================
 site:
-  title: 余弦の博客 # 网站名称
-  alternate: cosine # 网站英文名称 用于页脚、Logo、@ handle 等
-  subtitle: WA 的一声就哭了 # 网站副标题
-  name: cos # 作者名称 - 请修改为你的名字
+  title: 小哇牛博客 # 网站名称
+  alternate: ATechArk # 网站英文名称 用于页脚、Logo、@ handle 等
+  subtitle: 技术宅的自我修养 # 网站副标题
+  name: xiaowaniu # 作者名称 - 请修改为你的名字
   description: 一个基于 Astro 的现代化博客主题 # 网站描述
   avatar: /img/avatar.webp # 网站头像
   showLogo: false # 是否显示图形 Logo；默认显示站点名称，启用后可替换 src/assets/svg/logo.svg
   author: Author # 作者名称 - 请修改为你的名字
-  url: https://koharu.cosine.ren # 站点 URL 用于 RSS 和 SEO
+  url: https://atechark.com # 站点 URL 用于 RSS 和 SEO
   defaultOgImage: /img/avatar.webp # 默认 Open Graph 图片
-  startYear: 2024 # 建站年份
+  startYear: 2026 # 建站年份
   timezone: Asia/Shanghai # 时区配置 (IANA 格式)，用于日期显示和处理
   keywords: # SEO 关键词 (全局)
     - 博客
@@ -100,9 +101,9 @@ featuredCategories:
     image: /img/cover/4.webp
     description: 技术笔记、学习笔记
   - link: note/front-end # 嵌套分类：笔记/前端
-    label: 前端
+    label: 算法
     image: /img/cover/1.webp
-    description: 前端技术相关
+    description: 算法学习、算法题解，论文阅读
   - link: tools # 对应 categoryMap 中 工具: tools
     label: 工具
     image: /img/cover/11.webp
@@ -415,13 +416,35 @@ content:
 #     subtle  克制：保留入场与过渡，正文不做滚动浮现，不播放樱花特效
 #     reduced 减弱：关闭装饰性动效，只保留必要的交互反馈
 #   heroPetals: 头图樱花飘落（仅 lively 档生效）
+#   heroPetal: 头图里每一片飘落物的图片，svg 或 gif。写一个路径，或用列表让每一片轮换。
+#     路径规则同 clickBurstPetal。留空（'' 或 []）则退回内置花瓣。
+#     飘落画在画布上，gif 只会显示第一帧。
 #   clickBurst: 点击按钮、链接等可交互元素时迸出花瓣（仅 lively 档生效）
+#   clickBurstPetal: 每片花瓣的图片，svg 或 gif。写一个路径，或用列表让每一片轮换。
+#     站内路径以 / 开头（文件放在 public/ 下，例如 public/img/effects/petal.gif → /img/effects/petal.gif），
+#     也可以写 http(s) 地址。换成自己的文件时，改这里的路径即可。
+#     留空（'' 或 []）则退回内置花瓣形状。
+#   sectionBloom: 栏目标题两侧的花朵（置顶文章、文章列表等分隔标题），svg 或 gif，规则同上。
+#     留空（''）则退回内置樱花。
+#   footerBloom: 页脚版权行里、年份和署名之间那朵缓慢旋转的花，svg 或 gif，规则同上。
+#     留空（''）则退回内置樱花，并保持原来的旋转。换成自己的图片后，同样会缓慢旋转。
+#   tocPetal: 阅读文章时，左侧目录上跟随当前标题的标记，svg 或 gif，规则同上。
+#     留空（''）则退回内置花瓣。
 # 系统开启「减少动态效果」(prefers-reduced-motion) 时，始终按 reduced 处理
 # -----------------------------------------------------------------------------
 motion:
   level: lively
   heroPetals: true
+  heroPetal: /img/effects/snow.svg
   clickBurst: true
+  clickBurstPetal:
+    - /img/effects/snow.svg
+    - /img/effects/snow.svg
+    - /img/effects/snow.svg
+    - /img/effects/snow.svg
+  sectionBloom: /img/effects/snow.svg
+  footerBloom: /img/effects/snow.svg
+  tocPetal: /img/effects/snow.svg
 
 # =============================================================================
 # Moments Archive (optional)
@@ -703,7 +726,15 @@ navigation:
     # path: # 用于区分不同文章的自定义 js 路径，如果您的文章路径不是 location.pathname，需传此参数
     # lang: # 语言 (默认: 'zh-CN')
 comment:
-  provider: none  # 'remark42' | 'giscus' | 'waline' | 'twikoo' | 'none'
+  provider: waline  # 'remark42' | 'giscus' | 'waline' | 'twikoo' | 'none'
+  waline:
+    serverURL: https://comment.atechark.com
+    lang: zh-CN
+    dark: html.dark
+    login: enable
+    commentSorting: latest
+    comment: true
+    pageview: false
   # remark42:
   #   host: https://comment.example.com/
   #   siteId: your-site-id

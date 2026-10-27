@@ -257,8 +257,12 @@ html.motion-off [data-astro-transition-scope] {
   position: absolute;
   top: 0;
   left: 0;
-  mask: var(--petal-mask) center / contain no-repeat;
+  object-fit: contain;
   will-change: transform, opacity;
+}
+
+.petal-burst-builtin {
+  mask: var(--petal-mask) center / contain no-repeat;
 }
 
 /* During a view transition the layer is shown live above both pages, never from its frozen snapshot. */

@@ -74,5 +74,5 @@ const { post, siderType, isPostPage, articleTools = true } = Astro.props;
   setupScrollReveal();
   setupScrollbarActivity();
   setupTouchPrefetch();
-  if (motionConfig.clickBurst) setupPetalBurst();
+  if (motionConfig.clickBurst) setupPetalBurst(motionConfig.clickBurstPetals);
 </script>

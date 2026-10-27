@@ -68,8 +68,11 @@ function ButtonLink({ url, label, isActive, glideKey, onIntent, children }: Butt
   );
 }
 
+/** At the top of the page the main nav is always shown, even if the last scroll was downward. */
+const HEADER_VISIBLE_AT_TOP = 1;
+
 const Navigator = memo(function Navigator({ currentPath, locale = defaultLocale }: NavigatorProps) {
-  const { isBeyond, direction } = useScrollTrigger({
+  const { isBeyond, direction, scrollY } = useScrollTrigger({
     triggerDistance: 0.45,
     throttleMs: 80,
   });
@@ -119,6 +122,17 @@ const Navigator = memo(function Navigator({ currentPath, locale = defaultLocale 
   useEffect(() => {
     const siteHeader = document.getElementById('site-header');
     const mobileMenuContainer = document.getElementById('mobile-menu-container');
+    const showHeader = () => {
+      siteHeader?.classList.remove('-translate-y-full');
+      mobileMenuContainer?.classList.remove('-translate-y-full');
+    };
+
+    // The top of the page always shows the nav. A jump home can arrive with the last direction still "down".
+    if (scrollY <= HEADER_VISIBLE_AT_TOP) {
+      showHeader();
+      firstScrollRef.current = false;
+      return;
+    }
 
     // Skip first scroll
     if (firstScrollRef.current) {
@@ -128,9 +142,7 @@ const Navigator = memo(function Navigator({ currentPath, locale = defaultLocale 
 
     // Post page mobile: keep header visible during scroll
     if (isPostPageMobile) {
-      // Ensure header is visible
-      siteHeader?.classList.remove('-translate-y-full');
-      mobileMenuContainer?.classList.remove('-translate-y-full');
+      showHeader();
       return;
     }
 
@@ -139,10 +151,9 @@ const Navigator = memo(function Navigator({ currentPath, locale = defaultLocale 
       siteHeader?.classList.add('-translate-y-full');
       mobileMenuContainer?.classList.add('-translate-y-full');
     } else if (direction === 'up') {
-      siteHeader?.classList.remove('-translate-y-full');
-      mobileMenuContainer?.classList.remove('-translate-y-full');
+      showHeader();
     }
-  }, [direction, isPostPageMobile]);
+  }, [direction, isPostPageMobile, scrollY]);
 
   return (
     <div className="tablet:col-start-3 flex grow tablet:grow-0 items-center tablet:justify-self-end">

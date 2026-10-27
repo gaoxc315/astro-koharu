@@ -36,6 +36,32 @@ const MAX_PUSH = 260;
 
 const random = (min: number, max: number) => min + Math.random() * (max - min);
 
+function loadDecoration(src: string): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.decoding = 'async';
+    image.onload = () => resolve(image.naturalWidth > 0 ? image : null);
+    image.onerror = () => resolve(null);
+    image.src = src;
+  });
+}
+
+/** Fit one configured image into the same box the built-in petal sprite uses. */
+function rasterizeDecoration(image: HTMLImageElement, scale: number): HTMLCanvasElement {
+  const width = Math.ceil(PETAL_VIEWBOX.width * scale);
+  const height = Math.ceil(PETAL_VIEWBOX.height * scale);
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return canvas;
+  const fit = Math.min(width / image.naturalWidth, height / image.naturalHeight);
+  const dw = image.naturalWidth * fit;
+  const dh = image.naturalHeight * fit;
+  ctx.drawImage(image, (width - dw) / 2, (height - dh) / 2, dw, dh);
+  return canvas;
+}
+
 export class PetalField {
   private readonly ctx: CanvasRenderingContext2D;
   private sprites: HTMLCanvasElement[] = [];
@@ -47,11 +73,18 @@ export class PetalField {
   private lastTime = 0;
   private clock = 0;
   private pointer = { x: -9999, y: -9999, vx: 0, vy: 0, time: 0 };
+  /** `null` while configured images are still loading. An empty list means every image failed. */
+  private images: HTMLImageElement[] | null = null;
+  private spriteScale = 0;
 
-  constructor(private readonly canvas: HTMLCanvasElement) {
+  constructor(
+    private readonly canvas: HTMLCanvasElement,
+    private readonly sources: readonly string[] = [],
+  ) {
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Canvas 2D context unavailable');
     this.ctx = ctx;
+    if (this.sources.length > 0) void this.loadSources();
   }
 
   get running(): boolean {
@@ -66,7 +99,7 @@ export class PetalField {
     this.height = height;
     this.canvas.width = Math.round(width * this.dpr);
     this.canvas.height = Math.round(height * this.dpr);
-    if (this.sprites.length === 0) this.sprites = createPetalSprites(SPRITE_UNIT * this.dpr);
+    this.rebuildSprites();
 
     const coarse = window.matchMedia('(pointer: coarse)').matches;
     const density = (width * height) / (coarse ? 30000 : 24000);
@@ -102,6 +135,26 @@ export class PetalField {
   clear(): void {
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  }
+
+  private async loadSources(): Promise<void> {
+    const loaded = await Promise.all(this.sources.map(loadDecoration));
+    this.images = loaded.filter((image): image is HTMLImageElement => image !== null);
+    this.rebuildSprites();
+  }
+
+  /** Built-in petals when no image is configured, or once configured images have loaded. */
+  private rebuildSprites(): void {
+    const scale = SPRITE_UNIT * this.dpr;
+    if (this.sources.length === 0) {
+      if (this.sprites.length === 0) this.sprites = createPetalSprites(scale);
+      return;
+    }
+    if (!this.images || (this.spriteScale === scale && this.sprites.length > 0)) return;
+    this.sprites =
+      this.images.length > 0 ? this.images.map((image) => rasterizeDecoration(image, scale)) : createPetalSprites(scale);
+    this.spriteScale = scale;
+    for (const petal of this.petals) petal.sprite %= this.sprites.length;
   }
 
   private spawn(scatter: boolean): Petal {

@@ -1,3 +1,4 @@
+import { motionConfig } from '@constants/site-config';
 import type { ReadingProgress } from '@hooks/useReadingProgress';
 import { useTocGlide } from '@hooks/useTocGlide';
 import { PETAL_MASK } from '@lib/sakura/petal';
@@ -35,7 +36,11 @@ export function TocGlide({
       </svg>
       <span ref={washRef} className="toc-wash" data-toc-rail aria-hidden="true" />
       <span ref={petalRef} className="toc-petal" data-toc-rail aria-hidden="true">
-        <span style={{ maskImage: PETAL_MASK, WebkitMaskImage: PETAL_MASK }} />
+        {motionConfig.tocPetal ? (
+          <img src={motionConfig.tocPetal} alt="" draggable={false} />
+        ) : (
+          <span style={{ maskImage: PETAL_MASK, WebkitMaskImage: PETAL_MASK }} />
+        )}
       </span>
     </>
   );

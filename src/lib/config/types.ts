@@ -217,12 +217,52 @@ export interface MotionConfig {
   level?: MotionLevel;
   /** Falling sakura petals over page covers; only runs at the `lively` level. */
   heroPetals?: boolean;
+  /**
+   * Image for each petal falling over a page cover: one svg/gif path, or several cycled per petal.
+   * A site path (`/img/...`) or an http(s) URL. `''` or `[]` keeps the built-in petal.
+   * A gif is drawn from its first frame.
+   */
+  heroPetal?: string | readonly string[];
   /** Petal burst where interactive elements are clicked; only runs at the `lively` level. */
   clickBurst?: boolean;
+  /**
+   * Image for each petal in the click burst: one svg/gif path, or several cycled per petal.
+   * A site path (`/img/...`) or an http(s) URL. `''` or `[]` keeps the built-in petal.
+   */
+  clickBurstPetal?: string | readonly string[];
+  /**
+   * Image on both sides of a section title (pinned posts and the other dividers).
+   * An svg or gif path. `''` keeps the built-in sakura.
+   */
+  sectionBloom?: string;
+  /**
+   * Image between the copyright years and the site name. An svg or gif path.
+   * `''` keeps the built-in sakura, which still spins slowly.
+   */
+  footerBloom?: string;
+  /**
+   * Marker that follows the current heading in the article table of contents.
+   * An svg or gif path. `''` keeps the built-in petal.
+   */
+  tocPetal?: string;
 }
 
 /** Motion config after defaults are applied — no optional fields. */
-export type ResolvedMotionConfig = Required<MotionConfig>;
+export interface ResolvedMotionConfig {
+  level: MotionLevel;
+  heroPetals: boolean;
+  /** Empty when cover petals should draw the built-in petal. */
+  heroPetalSources: readonly string[];
+  clickBurst: boolean;
+  /** Empty when the click burst should draw the built-in petal. */
+  clickBurstPetals: readonly string[];
+  /** Empty when section titles should draw the built-in sakura. */
+  sectionBloom: string;
+  /** Empty when the footer copyright mark should draw the built-in spinning sakura. */
+  footerBloom: string;
+  /** Empty when the table-of-contents marker should draw the built-in petal. */
+  tocPetal: string;
+}
 
 // =============================================================================
 // Navigation

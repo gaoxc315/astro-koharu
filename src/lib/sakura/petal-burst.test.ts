@@ -28,6 +28,7 @@ class FakeFlight {
 class FakeElement extends EventTarget {
   isConnected = true;
   className = '';
+  src = '';
   dataset = { motion: 'lively' };
   children: FakeElement[] = [];
   style = {
@@ -111,9 +112,14 @@ test('petal bursts cancel on motion/visibility changes and cannot resume after t
   };
 
   try {
-    setupPetalBurst();
+    setupPetalBurst(['/img/effects/a.svg', '/img/effects/b.gif']);
     press();
     assert.equal(flights.length, 7);
+    const petals = root.children[0].children;
+    assert.equal(petals[0].src, '/img/effects/a.svg');
+    assert.equal(petals[1].src, '/img/effects/b.gif');
+    assert.equal(petals[2].src, '/img/effects/a.svg');
+    assert.equal(petals[0].className, 'petal-burst');
     let ready!: () => void;
     const transitionReady = new Promise<void>((resolve) => {
       ready = resolve;

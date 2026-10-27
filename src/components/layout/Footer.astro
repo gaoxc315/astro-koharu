@@ -1,7 +1,7 @@
 ---
 import FooterAnnouncementEntry from '@components/announcement/FooterAnnouncementEntry';
 import { MAX_WIDTH } from '@constants/layout';
-import { icpConfig, siteConfig, umamiSiteStatsConfig } from '@constants/site-config';
+import { icpConfig, motionConfig, siteConfig, umamiSiteStatsConfig } from '@constants/site-config';
 import { getSiteStats } from '@lib/stats';
 import { cn } from '@lib/utils';
 import { Icon } from 'astro-icon/components';
@@ -76,7 +76,18 @@ const startYear = siteConfig?.startYear ?? currentYear;
           </>
         )
       }
-      <SakuraSVG className="mx-1 size-5 animate-spin text-[#FFC0CB] duration-10000" />
+      {
+        motionConfig.footerBloom ? (
+          <img
+            src={motionConfig.footerBloom}
+            alt=""
+            draggable="false"
+            class="mx-1 size-5 animate-spin object-contain duration-10000"
+          />
+        ) : (
+          <SakuraSVG className="mx-1 size-5 animate-spin text-[#FFC0CB] duration-10000" />
+        )
+      }
       <span class="author font-medium opacity-75" itemprop="copyrightHolder">
         {siteConfig.name}
         {siteConfig?.alternate ? `@${siteConfig.alternate}` : ''}

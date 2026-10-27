@@ -21,6 +21,7 @@ const SAMPLE_MS = 1000 / 30;
 const LAYER_NAME = 'petal-burst';
 
 let layer: HTMLDivElement | null = null;
+let petalSources: readonly string[] = [];
 const flights = new Set<Animation>();
 
 const random = (min: number, max: number) => min + Math.random() * (max - min);
@@ -31,9 +32,28 @@ function ensureLayer(): HTMLDivElement {
   layer = document.createElement('div');
   layer.className = 'petal-burst-layer';
   layer.setAttribute('aria-hidden', 'true');
-  layer.style.setProperty('--petal-mask', PETAL_MASK);
   document.documentElement.append(layer);
   return layer;
+}
+
+/** One flying petal: a configured svg/gif, or the built-in masked shape when no image is set. */
+function createPetal(index: number, size: number): HTMLElement {
+  const src = petalSources.length > 0 ? petalSources[index % petalSources.length] : '';
+  const petal = document.createElement(src ? 'img' : 'span');
+  petal.className = src ? 'petal-burst' : 'petal-burst petal-burst-builtin';
+  petal.style.width = `${size}px`;
+  petal.style.height = `${size * 1.2}px`;
+  petal.style.margin = `${-size * 0.6}px 0 0 ${-size / 2}px`;
+  if (!src) {
+    const [tip, base] = PETAL_COLORS[index % PETAL_COLORS.length];
+    petal.style.background = `linear-gradient(${tip}, ${base} 70%)`;
+    return petal;
+  }
+  const image = petal as HTMLImageElement;
+  image.alt = '';
+  image.draggable = false;
+  image.src = src;
+  return image;
 }
 
 /** One petal tossed from (x, y), sampled into keyframes. Positions are the petal's center in px. */
@@ -83,18 +103,13 @@ function simulateFlight(x: number, y: number, depth: number): { keyframes: Keyfr
 
 function burstAt(x: number, y: number): void {
   const host = ensureLayer();
+  if (petalSources.length === 0) host.style.setProperty('--petal-mask', PETAL_MASK);
+  else host.style.removeProperty('--petal-mask');
   host.style.viewTransitionName = LAYER_NAME;
   for (let i = 0; i < PETALS_PER_BURST; i++) {
     const depth = random(0.35, 1);
     const size = 7 + depth * 6;
-    const [tip, base] = PETAL_COLORS[i % PETAL_COLORS.length];
-    const petal = document.createElement('span');
-    petal.className = 'petal-burst';
-    petal.style.width = `${size}px`;
-    petal.style.height = `${size * 1.2}px`;
-    petal.style.margin = `${-size * 0.6}px 0 0 ${-size / 2}px`;
-    // The base color reaches further up than on the cover so the petals still read on white cards.
-    petal.style.background = `linear-gradient(${tip}, ${base} 70%)`;
+    const petal = createPetal(i, size);
     host.append(petal);
 
     const { keyframes, duration } = simulateFlight(x, y, depth);
@@ -120,7 +135,19 @@ export function holdPetalBurst(transition: ViewTransition): void {
   transition.ready.then(resume, resume);
 }
 
-export function setupPetalBurst(): void {
+/** Warm the first click so a svg/gif petal is already decoded when it is tossed. */
+function preloadPetals(sources: readonly string[]): void {
+  if (sources.length === 0 || typeof Image === 'undefined') return;
+  for (const src of sources) {
+    const image = new Image();
+    image.src = src;
+  }
+}
+
+/** `sources` are svg/gif urls cycled per petal. An empty list keeps the built-in petal shape. */
+export function setupPetalBurst(sources: readonly string[] = []): void {
+  petalSources = sources;
+  preloadPetals(sources);
   const stopWhenDisabled = () => {
     if (!document.hidden && readMotionLevel() === 'lively') return;
     for (const flight of flights) flight.cancel();
